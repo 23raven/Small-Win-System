@@ -1,0 +1,435 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#f4f9ff" />
+  <title>Small Wins System</title>
+  <link rel="icon" type="image/png" href="icon.png" />
+  <link rel="apple-touch-icon" href="icon.png" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <div>
+        <div class="brand">Small Wins System</div>
+        <div class="tagline">Non-Zero Days. Every Day Is a Win.</div>
+      </div>
+      <div class="topbar-actions">
+        <button class="nav-btn" id="openDisciplineSettingsBtn" title="Disciplines">◉ <span>Disciplines</span></button>
+        <button class="nav-btn" id="openRewardSettingsBtn" title="Reward Queue">🎁 <span>Rewards</span></button>
+        <button class="profile-chip" id="profileBtn" title="Profile">
+          <img id="miniProfilePhoto" alt="" class="avatar avatar-small hidden" />
+          <span id="miniProfileInitials" class="avatar avatar-small">S</span>
+          <span id="miniProfileName">SWS User</span>
+        </button>
+        <div class="day-chip">
+          <span id="todayLabel">Today</span>
+          <strong id="resetCountdown">Reset in --:--:--</strong>
+        </div>
+        <button class="icon-btn" id="settingsBtn" title="Settings" aria-label="Settings">⚙️</button>
+      </div>
+    </header>
+
+    <main class="dashboard">
+      <section class="panel progress-panel">
+        <div class="panel-head">
+          <div>
+            <div class="eyebrow">TODAY</div>
+            <div class="hero-progress">
+              <div class="hero-tier" id="heroTierIcon">⭐</div>
+              <div>
+                <h2 id="dailyStarsTitle">0 ⭐</h2>
+                <div class="hero-subtitle" id="dailyMinutesTitle">0 minutes useful activity</div>
+              </div>
+            </div>
+          </div>
+          <div class="status-pill" id="dayStatus">ZERO</div>
+        </div>
+
+        <div class="star-meter">
+          <div class="meter-row">
+            <span id="currentMilestoneLabel">No milestone reached yet</span>
+            <strong id="nextMilestoneText">5 min to ⭐ First Star</strong>
+          </div>
+          <div class="meter-track">
+            <div class="meter-fill" id="milestoneMeterFill"></div>
+          </div>
+        </div>
+
+        <div class="milestones" id="milestones"></div>
+      </section>
+
+      <section class="workspace">
+        <aside class="panel discipline-panel">
+          <div class="panel-head compact">
+            <div>
+              <div class="eyebrow">DISCIPLINES</div>
+              <h3>What am I doing?</h3>
+            </div>
+          </div>
+
+          <div class="discipline-list" id="disciplineList"></div>
+
+          <div class="task-editor">
+            <div class="eyebrow">QUICK TASK</div>
+            <div class="task-row">
+              <input id="taskInput" type="text" maxlength="120" placeholder="e.g. Player controller" />
+              <button class="primary small" id="addTaskBtn">Add</button>
+            </div>
+            <select id="taskDisciplineSelect" class="full-select"></select>
+          </div>
+
+          <div class="task-list" id="taskList"></div>
+        </aside>
+
+        <section class="panel timer-panel">
+          <div class="eyebrow">FOCUS UNIT</div>
+          <div class="selected-activity" id="selectedActivity">🎮 Unity · No task selected</div>
+
+          <div class="timer-size-row">
+            <button class="unit-adjust" id="decreaseUnitsBtn" title="Decrease focus units" aria-label="Decrease focus units">−</button>
+            <div class="timer-size">
+              <div class="timer-size-count" id="focusUnitsCount">5 MINUTES</div>
+              <div class="timer-size-meta" id="focusUnitsMeta">1 ⭐</div>
+            </div>
+            <button class="unit-adjust" id="increaseUnitsBtn" title="Increase focus units" aria-label="Increase focus units">+</button>
+          </div>
+
+          <div class="timer" id="timer">05:00</div>
+
+          <div class="timer-subline">
+            <span>1 unit = 5 minutes = 1 ⭐</span>
+            <span class="dot">•</span>
+            <span id="currentMode">Ready</span>
+          </div>
+
+          <div class="timer-actions">
+            <button class="timer-main" id="startPauseBtn">Start</button>
+            <button class="timer-secondary" id="resetTimerBtn">Reset</button>
+          </div>
+
+          <div class="completion-note" id="completionNote" aria-live="polite">
+            Finish the focus unit to earn Stars. The next unit is always manual.
+          </div>
+        </section>
+
+        <aside class="panel rewards-panel">
+          <div class="panel-head compact">
+            <div>
+              <div class="eyebrow">REWARD QUEUE</div>
+              <h3>Open them one by one.</h3>
+            </div>
+          </div>
+
+          <div class="current-reward" id="currentReward"></div>
+          <div class="reward-list" id="rewardList"></div>
+        </aside>
+      </section>
+
+      <section class="lower-grid">
+        <section class="panel">
+          <div class="panel-head compact">
+            <div>
+              <div class="eyebrow">TODAY BY DISCIPLINE</div>
+              <h3>Stars earned</h3>
+            </div>
+          </div>
+          <div class="discipline-stats" id="disciplineStats"></div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-head compact">
+            <div>
+              <div class="eyebrow">TODAY</div>
+              <h3>Session log</h3>
+            </div>
+          </div>
+          <div class="session-log" id="sessionLog"></div>
+        </section>
+      </section>
+
+      <section class="panel history-panel">
+        <div class="panel-head compact history-head">
+          <div>
+            <div class="eyebrow">HISTORY</div>
+            <h3>Non-Zero Days</h3>
+          </div>
+          <button class="ghost small" id="exportBtn">Export CSV</button>
+        </div>
+        <div class="history-toolbar">
+          <div class="segmented" role="tablist" aria-label="History view">
+            <button class="segment active" data-history-view="classic" role="tab">Cards</button>
+            <button class="segment" data-history-view="contributions" role="tab">Contributions</button>
+            <button class="segment" data-history-view="graph" role="tab">Graph</button>
+          </div>
+          <div class="history-caption" id="historyCaption">Recent days at a glance</div>
+        </div>
+        <div id="historyContent"></div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <span>⭐ 1 Star = 5 minutes of useful activity</span>
+      <span id="footerFocusText">Focus Unit: 1 unit · 5 minutes</span>
+    </footer>
+  </div>
+
+  <!-- System settings -->
+  <div class="modal-backdrop hidden" id="settingsModal">
+    <div class="modal settings-modal" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
+      <div class="modal-head">
+        <div>
+          <div class="eyebrow">SYSTEM</div>
+          <h2 id="settingsTitle">SWS Settings</h2>
+        </div>
+        <button class="icon-btn" id="closeSettingsBtn" aria-label="Close settings">✕</button>
+      </div>
+
+      <div class="settings-grid">
+        <label>
+          <span>Theme</span>
+          <select id="themeInput">
+            <option value="sky">Clear Sky</option>
+            <option value="paper">Warm Paper</option>
+            <option value="lavender">Soft Lavender</option>
+          </select>
+        </label>
+
+        <label>
+          <span>Daily reset</span>
+          <select id="resetHourInput"></select>
+        </label>
+
+        <label>
+          <span>Focus Unit step</span>
+          <select id="focusStepInput"></select>
+        </label>
+
+        <div class="settings-card" id="notificationCard">
+          <div class="settings-card-icon">🔔</div>
+          <div class="settings-card-copy">
+            <strong>Notifications</strong>
+            <p id="notificationStatus">Browser notifications can tell you when a Focus Unit is complete.</p>
+          </div>
+          <button class="ghost small" id="notificationBtn">Enable</button>
+        </div>
+
+        <button class="settings-card button-card" id="openSyncSettingsBtn">
+          <div class="settings-card-icon">☁️</div>
+          <div class="settings-card-copy">
+            <strong>GitHub Sync</strong>
+            <p id="syncSummary">Optional cloud save for GitHub Pages.</p>
+          </div>
+          <span class="settings-card-arrow">›</span>
+        </button>
+      </div>
+
+      <div class="modal-actions">
+        <button class="ghost" id="resetTodayBtn">Reset today's progress</button>
+        <button class="primary" id="saveSettingsBtn">Save settings</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Reward editor -->
+  <div class="modal-backdrop hidden" id="rewardModal">
+    <div class="modal reward-modal" role="dialog" aria-modal="true" aria-labelledby="rewardTitle">
+      <div class="modal-head">
+        <div>
+          <div class="eyebrow">REWARD QUEUE</div>
+          <h2 id="rewardTitle">Customize rewards</h2>
+          <p class="modal-description">Rewards unlock one by one as your daily Stars reach each threshold.</p>
+        </div>
+        <button class="icon-btn" id="closeRewardModalBtn" aria-label="Close reward settings">✕</button>
+      </div>
+
+      <div class="reward-editor-list" id="rewardSettings"></div>
+
+      <div class="add-reward-box">
+        <div class="add-reward-title">Add reward</div>
+        <div class="add-reward-row">
+          <button type="button" class="emoji-input emoji-button add-emoji-button" id="newRewardEmoji" data-picker-source="reward" aria-label="Choose reward emoji">🎁</button>
+          <input id="newRewardName" maxlength="80" placeholder="Reward name" aria-label="Reward name" />
+          <input id="newRewardThreshold" type="number" min="1" step="1" placeholder="Stars" aria-label="Unlock threshold in Stars" />
+          <button class="primary small" id="addRewardBtn">Add</button>
+        </div>
+      </div>
+
+      <div class="modal-actions">
+        <button class="ghost" id="cancelRewardBtn">Cancel</button>
+        <button class="primary" id="saveRewardBtn">Save rewards</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Discipline editor -->
+  <div class="modal-backdrop hidden" id="disciplineModal">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="disciplineTitle">
+      <div class="modal-head">
+        <div>
+          <div class="eyebrow">DISCIPLINES</div>
+          <h2 id="disciplineTitle">Customize disciplines</h2>
+        </div>
+        <button class="icon-btn" id="closeDisciplineModalBtn" aria-label="Close discipline settings">✕</button>
+      </div>
+
+      <div id="disciplineSettings" class="discipline-settings-list"></div>
+
+      <div class="add-discipline-box">
+        <div class="add-reward-title">Add discipline</div>
+        <div class="add-discipline-row">
+          <button type="button" class="emoji-input emoji-button add-emoji-button" id="newDisciplineEmoji" data-picker-source="discipline" aria-label="Choose discipline emoji">🧩</button>
+          <input id="newDisciplineName" type="text" maxlength="40" placeholder="New discipline" aria-label="Discipline name" />
+          <button class="primary small" id="addDisciplineBtn">Add</button>
+        </div>
+      </div>
+
+      <div class="modal-actions">
+        <button class="ghost" id="closeDisciplineDoneBtn">Done</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Profile -->
+  <div class="modal-backdrop hidden" id="profileModal">
+    <div class="modal profile-modal" role="dialog" aria-modal="true" aria-labelledby="profileTitle">
+      <div class="modal-head">
+        <div>
+          <div class="eyebrow">PROFILE</div>
+          <h2 id="profileTitle">Your SWS profile</h2>
+        </div>
+        <button class="icon-btn" id="closeProfileModalBtn" aria-label="Close profile">✕</button>
+      </div>
+
+      <div class="profile-editor">
+        <div class="profile-large-avatar-wrap">
+          <img id="profilePhotoPreview" alt="" class="profile-large-avatar hidden" />
+          <div id="profileInitials" class="profile-large-avatar initials-avatar">S</div>
+        </div>
+        <div class="profile-editor-copy">
+          <label>
+            <span>Nickname</span>
+            <input id="profileNicknameInput" maxlength="40" placeholder="Your nickname" />
+          </label>
+          <div class="profile-photo-actions">
+            <button class="ghost small" id="chooseProfilePhotoBtn">Change photo</button>
+            <button class="ghost small" id="removeProfilePhotoBtn">Remove photo</button>
+            <input id="profilePhotoInput" type="file" accept="image/*" hidden />
+          </div>
+        </div>
+      </div>
+
+      <div class="profile-stats-grid" id="profileStatsGrid"></div>
+
+      <div class="profile-section">
+        <div class="panel-head compact no-padding">
+          <div>
+            <div class="eyebrow">GLOBAL BY DISCIPLINE</div>
+            <h3>Where your Stars go</h3>
+          </div>
+        </div>
+        <div class="discipline-stats" id="profileDisciplineStats"></div>
+      </div>
+
+      <div class="profile-section">
+        <div class="panel-head compact no-padding">
+          <div>
+            <div class="eyebrow">GLOBAL HISTORY</div>
+            <h3>Lifetime progress</h3>
+          </div>
+        </div>
+        <div class="profile-mini-history" id="profileMiniHistory"></div>
+      </div>
+
+      <div class="modal-actions">
+        <button class="ghost" id="closeProfileDoneBtn">Close</button>
+        <button class="primary" id="saveProfileBtn">Save profile</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- GitHub sync editor -->
+  <div class="modal-backdrop hidden" id="syncModal">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="syncTitle">
+      <div class="modal-head">
+        <div>
+          <div class="eyebrow">CLOUD SAVE</div>
+          <h2 id="syncTitle">GitHub Sync</h2>
+          <p class="modal-description">
+            GitHub Pages is static, so it cannot save data by itself. This optional sync writes SWS data to a JSON file in a GitHub repository.
+          </p>
+        </div>
+        <button class="icon-btn" id="closeSyncModalBtn" aria-label="Close sync settings">✕</button>
+      </div>
+
+      <div class="sync-warning">
+        <strong>Security note</strong>
+        <p>A browser cannot safely hide a GitHub token. Use a fine-grained token restricted to this repository and its Contents permission, and only on a repository you control.</p>
+      </div>
+
+      <div class="settings-grid">
+        <label>
+          <span>Repository owner</span>
+          <input id="githubOwnerInput" placeholder="username or org" autocomplete="off" />
+        </label>
+        <label>
+          <span>Repository name</span>
+          <input id="githubRepoInput" placeholder="sws" autocomplete="off" />
+        </label>
+        <label>
+          <span>Branch</span>
+          <input id="githubBranchInput" placeholder="main" autocomplete="off" />
+        </label>
+        <label>
+          <span>Data file path</span>
+          <input id="githubPathInput" placeholder="data/sws-data.json" autocomplete="off" />
+        </label>
+        <label class="wide-field">
+          <span>Fine-grained GitHub token</span>
+          <input id="githubTokenInput" type="password" placeholder="github_pat_..." autocomplete="off" />
+        </label>
+      </div>
+
+      <div class="sync-actions">
+        <button class="ghost" id="githubPullBtn">Pull from GitHub</button>
+        <button class="primary" id="githubPushBtn">Save to GitHub</button>
+      </div>
+
+      <div class="sync-status" id="syncStatus">Local data is the active source until you connect a repository.</div>
+
+      <div class="modal-actions">
+        <button class="ghost" id="clearSyncBtn">Clear GitHub settings</button>
+        <button class="primary" id="saveSyncSettingsBtn">Save settings</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Emoji picker -->
+  <div class="modal-backdrop hidden" id="emojiModal">
+    <div class="emoji-modal" role="dialog" aria-modal="true" aria-label="Choose emoji">
+      <div class="emoji-modal-head">
+        <div class="eyebrow">EMOJI</div>
+        <button class="icon-btn" id="closeEmojiModalBtn" aria-label="Close emoji picker">✕</button>
+      </div>
+      <div class="emoji-grid" id="emojiGrid"></div>
+    </div>
+  </div>
+
+  <!-- Completion -->
+  <div class="completion-modal hidden" id="completionModal">
+    <div class="completion-box" role="alertdialog" aria-modal="true" aria-labelledby="completionTitle">
+      <div class="completion-icon">✓</div>
+      <div class="eyebrow">FOCUS UNIT COMPLETE</div>
+      <h2 id="completionTitle">+1 ⭐</h2>
+      <p id="completionMessage">You earned a Star. Start the next unit manually when you are ready.</p>
+      <button class="primary" id="closeCompletionBtn">Done</button>
+    </div>
+  </div>
+
+  <audio id="notificationSound" preload="auto" src="notification.mp3"></audio>
+  <div class="toast" id="toast" aria-live="polite"></div>
+  <script src="scripts.js"></script>
+</body>
+</html>
