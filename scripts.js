@@ -1353,11 +1353,10 @@
 
     if (stepChanged) {
       // A new step creates a new Focus Unit grid.
-      // Start at its minimum value instead of carrying over the old Focus Unit.
+      // Reset the current Focus Unit to the new minimum value.
       state.settings.focusMinutes = newStep;
 
-      // Changing the step while a timer is running should never silently
-      // modify the active session; reset it explicitly.
+      // The active timer must never continue with the old duration.
       resetTimer();
 
       persist();
@@ -1859,10 +1858,9 @@
     if (e.target === $("settingsModal")) closeSettings();
   });
 
-  $("focusStepInput").addEventListener("change", () => {
-    state.settings.focusStepMinutes = sanitizeFocusStep($("focusStepInput").value);
-    persist();
-  });
+  // Focus Unit step is intentionally committed only by Save Settings.
+  // This lets saveSettings() detect a real step change and reset the current
+  // Focus Unit to the new minimum (the selected step).
   $("saveSettingsBtn").addEventListener("click", saveSettings);
   $("closeRewardModalBtn").addEventListener("click", closeRewardSettings);
   $("cancelRewardBtn").addEventListener("click", cancelRewards);
