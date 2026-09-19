@@ -285,7 +285,8 @@
 
   function renderHeader() {
     $("todayLabel").textContent = localDateLabel();
-    $("footerFocusText").textContent = `Focus Unit: ${state.settings.focusMinutes} ${state.settings.focusMinutes === 1 ? "minute" : "minutes"}`;
+    $("footerFocusText").textContent =
+      `Focus Unit: ${state.settings.focusMinutes} ${state.settings.focusMinutes === 1 ? "minute" : "minutes"} · Step: ${state.settings.focusStepMinutes} min`;
   }
 
   function renderProgress() {
@@ -1274,6 +1275,7 @@
     $("timer").textContent = `${String(min).padStart(2,"0")}:${String(sec).padStart(2,"0")}`;
     $("focusUnitsCount").textContent = `${state.settings.focusMinutes} ${state.settings.focusMinutes === 1 ? "MINUTE" : "MINUTES"}`;
     $("focusUnitsMeta").textContent = `${formatStars(state.settings.focusMinutes / 5)} ⭐`;
+    $("focusStepHint").textContent = `${state.settings.focusStepMinutes} min`;
 
     $("decreaseUnitsBtn").disabled = timerRunning || state.settings.focusMinutes <= 1;
     $("increaseUnitsBtn").disabled = timerRunning || state.settings.focusMinutes >= 60;
@@ -1342,8 +1344,30 @@
     state.settings.theme = ["sky","paper","lavender"].includes($("themeInput").value)
       ? $("themeInput").value
       : "sky";
+
     state.settings.resetHour = clampInt($("resetHourInput").value, 0, 23);
-    state.settings.focusStepMinutes = sanitizeFocusStep($("focusStepInput").value);
+
+    const newStep = sanitizeFocusStep($("focusStepInput").value);
+    const stepChanged = newStep !== state.settings.focusStepMinutes;
+    state.settings.focusStepMinutes = newStep;
+
+    if (stepChanged) {
+      // A new step creates a new Focus Unit grid.
+      // Start at its minimum value instead of carrying over the old Focus Unit.
+      state.settings.focusMinutes = newStep;
+
+      // Changing the step while a timer is running should never silently
+      // modify the active session; reset it explicitly.
+      resetTimer();
+
+      persist();
+      renderAll();
+      closeSettings();
+      toast(`Focus Unit step changed to ${newStep} min. Focus Unit reset to ${newStep} min.`);
+      return;
+    }
+
+    state.settings.focusMinutes = sanitizeFocusMinutes(state.settings.focusMinutes);
 
     persist();
     renderAll();
