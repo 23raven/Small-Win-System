@@ -134,8 +134,12 @@
     out.version = 6;
     out.profile.nickname = String(out.profile.nickname || "SWS User").trim().slice(0, 40) || "SWS User";
     out.profile.photo = typeof out.profile.photo === "string" ? out.profile.photo : "";
-    out.settings.focusMinutes = sanitizeFocusMinutes(importedFocusMinutes);
-    out.settings.focusStepMinutes = sanitizeFocusStep(importedFocusStepMinutes);
+    const normalizedFocus = normalizeFocusPair(
+      importedFocusStepMinutes,
+      importedFocusMinutes
+    );
+    out.settings.focusStepMinutes = normalizedFocus.step;
+    out.settings.focusMinutes = normalizedFocus.minutes;
     out.settings.starMinutes = 5;
     out.settings.resetHour = clampInt(out.settings.resetHour, 0, 23);
     if (out.settings.theme === "apple") out.settings.theme = "sky";
@@ -207,6 +211,21 @@
     const n = Number(value);
     if (!Number.isFinite(n)) return 5;
     return Math.min(60, Math.max(1, Math.round(n)));
+  }
+
+  function normalizeFocusPair(stepValue, focusValue) {
+    const step = sanitizeFocusStep(stepValue);
+    let minutes = sanitizeFocusMinutes(focusValue);
+
+    // Focus Unit must be at least one Step and aligned to the Step grid.
+    if (minutes < step) {
+      minutes = step;
+    } else {
+      minutes = step * Math.floor(minutes / step);
+      if (minutes < step) minutes = step;
+    }
+
+    return { step, minutes: Math.min(60, minutes) };
   }
 
   function clampInt(n, min, max) {
@@ -755,6 +774,15 @@
   }
 
   function renderSettingsSummary() {
+    const normalizedFocus = normalizeFocusPair(
+      state.settings.focusStepMinutes,
+      state.settings.focusMinutes
+    );
+    state.settings.focusStepMinutes = normalizedFocus.step;
+    state.settings.focusMinutes = normalizedFocus.minutes;
+    state.settings.focusUnits = Math.max(1, Math.round(state.settings.focusMinutes / 5));
+
+
     if (state.settings.theme === "apple") state.settings.theme = "sky";
     $("themeInput").value = state.settings.theme;
     $("focusStepInput").value = String(state.settings.focusStepMinutes);
@@ -947,8 +975,18 @@
   function changeFocusUnits(direction) {
     if (timerRunning) return;
 
-    const step = state.settings.focusStepMinutes;
-    state.settings.focusMinutes = sanitizeFocusMinutes(state.settings.focusMinutes + (direction * step));
+    const normalized = normalizeFocusPair(
+      state.settings.focusStepMinutes,
+      state.settings.focusMinutes
+    );
+    const step = normalized.step;
+    const current = normalized.minutes;
+    const next = Math.min(60, Math.max(step, current + (direction * step)));
+
+    state.settings.focusStepMinutes = step;
+    state.settings.focusMinutes = next;
+    state.settings.focusUnits = Math.max(1, Math.round(next / 5));
+
     persist();
 
     if (state.settings.github?.owner && state.settings.github?.repo && state.settings.github?.token) {
@@ -1348,30 +1386,36 @@
     state.settings.resetHour = clampInt($("resetHourInput").value, 0, 23);
 
     const newStep = sanitizeFocusStep($("focusStepInput").value);
-    const stepChanged = newStep !== state.settings.focusStepMinutes;
+    const oldStep = sanitizeFocusStep(state.settings.focusStepMinutes);
+    const stepChanged = newStep !== oldStep;
+
     state.settings.focusStepMinutes = newStep;
 
     if (stepChanged) {
-      // A new step creates a new Focus Unit grid.
-      // Reset the current Focus Unit to the new minimum value.
+      // Step defines the minimum Focus Unit for the new grid.
       state.settings.focusMinutes = newStep;
-
-      // The active timer must never continue with the old duration.
-      resetTimer();
-
-      persist();
-      renderAll();
-      closeSettings();
-      toast(`Focus Unit step changed to ${newStep} min. Focus Unit reset to ${newStep} min.`);
-      return;
+    } else {
+      // Repair any stale state such as Focus Unit < Step or a non-aligned value.
+      state.settings.focusMinutes = normalizeFocusPair(
+        newStep,
+        state.settings.focusMinutes
+      ).minutes;
     }
 
-    state.settings.focusMinutes = sanitizeFocusMinutes(state.settings.focusMinutes);
+    state.settings.focusUnits = Math.max(1, Math.round(state.settings.focusMinutes / 5));
+
+    // Keep the visible timer synchronized with the normalized Focus Unit.
+    resetTimer();
 
     persist();
     renderAll();
     closeSettings();
-    toast("SWS settings saved.");
+
+    toast(
+      stepChanged
+        ? `Focus Unit step changed to ${newStep} min. Focus Unit reset to ${newStep} min.`
+        : "SWS settings saved."
+    );
   }
 
   function resetToday() {
